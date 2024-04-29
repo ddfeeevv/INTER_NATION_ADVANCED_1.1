@@ -1,16 +1,6 @@
 import cv2
 import pytesseract
-import pyautogui
 from PIL import Image as PILImage
-
-# Функция для создания скриншота экрана ноутбука
-def take_screenshot(output_path):
-    screenshot = pyautogui.screenshot()
-    screenshot.save(output_path)
-
-# Создаем скриншот экрана ноутбука и сохраняем его в файл
-screenshot_path = 'screenshot.png'
-#take_screenshot(screenshot_path)
 
 # Функция для обрезки изображения
 def crop_image(input_path, output_path, width, height, x_offset, y_offset):
@@ -20,19 +10,36 @@ def crop_image(input_path, output_path, width, height, x_offset, y_offset):
     # Сохраняем результат
     cropped_img.save(output_path)
 
-# Параметры для обрезки первого скриншота
-crop_width1 = 240
-crop_height1 = 50
-x_offset1 = 280
-y_offset1 = 750
+# Параметры для обрезки скриншотов
+screenshots = [
+    {"input_path": "screenshot.png", "output_path": "cropped_first.png", "width": 690, "height": 50, "x_offset": 10, "y_offset": 740},
+    {"input_path": "screenshot.png", "output_path": "cropped_first_russian.png", "width": 690, "height": 120, "x_offset": 10, "y_offset": 870},
+    {"input_path": "screenshot.png", "output_path": "cropped_second_russian.png", "width": 690, "height": 120, "x_offset": 10, "y_offset": 1000},
+    {"input_path": "screenshot.png", "output_path": "cropped_third_russian.png", "width": 690, "height": 120, "x_offset": 10, "y_offset": 1150},
+    {"input_path": "screenshot.png", "output_path": "cropped_fourth_russian.png", "width": 690, "height": 120, "x_offset": 10, "y_offset": 1270}
+]
 
-# Обрезаем первый скриншот
-crop_image(screenshot_path, 'cropped_first.png', crop_width1, crop_height1, x_offset1, y_offset1)
+# Список для хранения распознанных текстов на русском
+russian_texts = []
 
-# Загружаем скриншот с помощью OpenCV
-img = cv2.imread("cropped_first.png")
+# Обрабатываем первый скриншот на английском языке
+crop_image(screenshots[0]["input_path"], screenshots[0]["output_path"], screenshots[0]["width"], screenshots[0]["height"], screenshots[0]["x_offset"], screenshots[0]["y_offset"])
+img = cv2.imread(screenshots[0]["output_path"])
 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+text_eng = pytesseract.image_to_string(img, lang='eng').strip().replace("® ", "")
 
-# Распознаем текст на скриншоте с помощью Tesseract
-config = r'--oem 3 -psm 6'
-print(pytesseract.image_to_string(img))
+# Добавляем текст с первого скриншота (на английском) в переменную и выводим его
+print("Текст со скриншота на английском:")
+print(text_eng)
+
+# Обрабатываем остальные скриншоты на русском языке
+for screenshot in screenshots[1:]:
+    crop_image(screenshot["input_path"], screenshot["output_path"], screenshot["width"], screenshot["height"], screenshot["x_offset"], screenshot["y_offset"])
+    img = cv2.imread(screenshot["output_path"])
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    text_rus = pytesseract.image_to_string(img, lang='rus').strip()
+    russian_texts.append(text_rus)
+
+# Выводим массив распознанных текстов на русском языке
+print("\nМассив текстов на русском:")
+print(russian_texts)

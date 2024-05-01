@@ -1,19 +1,36 @@
 import cv2
 import pytesseract
+import numpy as np
 from PIL import Image as PILImage
 import pyautogui
 import os
 import time
+import subprocess
 
 time.sleep(1)
+
+start_time = time.time()
+
+def run_adb_command(command):
+    subprocess.run(command, shell=True)
 
 def take_screenshot(output_path):
     screenshot = pyautogui.screenshot()
     screenshot.save(output_path)
 
+def process_first_screenshot(image_path):
+    img = cv2.imread(image_path)
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    lower_white = np.array([0, 0, 200])
+    upper_white = np.array([180, 30, 255])
+    mask = cv2.inRange(hsv, lower_white, upper_white)
+    result = cv2.bitwise_and(img, img, mask=mask)
+    gray = cv2.cvtColor(result, cv2.COLOR_BGR2GRAY)
+    _, binary = cv2.threshold(gray, 240, 255, cv2.THRESH_BINARY)
+    text = pytesseract.image_to_string(binary, lang='eng')
+    return text
 
 screenshot_path = 'screenshot.png'
-take_screenshot(screenshot_path)
 
 # Путь к папке с проектом
 project_folder = os.path.dirname(os.path.abspath(__file__))
@@ -64,12 +81,14 @@ def crop_image(input_path, output_path, width, height, x_offset, y_offset):
 
 # Параметры для обрезки скриншотов
 screenshots = [
-    {"input_path": "screenshot.png", "output_path": "cropped_first.png", "width": 670, "height": 50, "x_offset": 10, "y_offset": 790},
+    {"input_path": "screenshot.png", "output_path": "cropped_first.png", "width": 670, "height": 80, "x_offset": 10, "y_offset":780},
     {"input_path": "screenshot.png", "output_path": "cropped_first_russian.png", "width": 690, "height": 120, "x_offset": 10, "y_offset": 890},
     {"input_path": "screenshot.png", "output_path": "cropped_second_russian.png", "width": 690, "height": 120, "x_offset": 10, "y_offset": 1000},
     {"input_path": "screenshot.png", "output_path": "cropped_third_russian.png", "width": 690, "height": 120, "x_offset": 10, "y_offset": 1150},
     {"input_path": "screenshot.png", "output_path": "cropped_fourth_russian.png", "width": 690, "height": 120, "x_offset": 10, "y_offset": 1270}
 ]
+
+take_screenshot("screenshot.png")
 
 # Список для хранения распознанных текстов на русском
 russian_texts = []
@@ -78,7 +97,9 @@ russian_texts = []
 crop_image(screenshots[0]["input_path"], screenshots[0]["output_path"], screenshots[0]["width"], screenshots[0]["height"], screenshots[0]["x_offset"], screenshots[0]["y_offset"])
 img = cv2.imread(screenshots[0]["output_path"])
 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-text_eng = pytesseract.image_to_string(img, lang='eng').strip().replace("® ", "")
+
+# Обрабатываем первый скриншот на английском языке
+text_eng = process_first_screenshot(screenshots[0]["output_path"])
 
 # Добавляем текст с первого скриншота (на английском) в переменную и выводим его
 print("Текст со скриншота на английском:")
@@ -98,12 +119,58 @@ print(russian_texts)
 
 # Словарь английских слов и их переводов на русский
 dictionary = {
-    "Handsome": "Статный",
     "SCleaner": "Уборщик",
     "Hat": "Шляпа",
+    "Melon": "Дыня",
+    "(>) Checkout": "Выезд",
+    "«@» Grapes": "Виноград",
+    "«Fridge": "Холодильник",
+    "«@) Table": "Стол",
 }
 
 # Проверяем, есть ли перевод английского текста в словаре
 if text_eng not in dictionary:
     # Если перевода нет, сохраняем скриншот и текстовый файл
     save_failed_screenshot(text_eng, screenshots[0]["input_path"], text_eng)
+
+def find_translation(word, russian_words):
+    if word in dictionary:
+        translation = dictionary[word]
+        if translation in russian_words:
+            index = russian_words.index(translation)
+            return index
+    return None
+
+translation_index = find_translation(text_eng, russian_texts)
+
+if translation_index == 0:
+    # Если translation_index равен 0, нажимаем на координаты 100 100
+    run_adb_command('adb -s emulator-5554 shell input tap 150 425 ')
+    print(1)
+    run_adb_command('adb -s emulator-5554 shell input tap 150 650 ') #дальше
+elif translation_index == 1:
+    # Если translation_index равен 1, нажимаем на координаты 230 250
+    run_adb_command('adb -s emulator-5554 shell input tap 150 500 ')
+    print(2)
+    run_adb_command('adb -s emulator-5554 shell input tap 150 650 ') #дальше
+elif translation_index == 2:
+    # Если translation_index равен 2, нажимаем на координаты 421 242
+    run_adb_command('adb -s emulator-5554 shell input tap 150 570 ')
+    print(3)
+    run_adb_command('adb -s emulator-5554 shell input tap 150 650 ') #дальше
+elif translation_index == 3:
+    # Если translation_index равен 3, нажимаем на координаты 412 241
+    run_adb_command('adb -s emulator-5554 shell input tap 150 630 ')
+    print(4)
+    run_adb_command('adb -s emulator-5554 shell input tap 150 650 ') #дальше
+else:
+    run_adb_command('adb -s emulator-5554 shell input tap 150 630 ')
+    print(5)
+    time.sleep(0.2)
+    run_adb_command('adb -s emulator-5554 shell input tap 150 650 ') #дальше
+
+
+end_time = time.time()
+
+execution_time = end_time - start_time
+print(f"Время выполнения скрипта: {execution_time} секунд")

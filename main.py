@@ -6,6 +6,8 @@ import pyautogui
 import os
 import time
 import subprocess
+import difflib
+import re
 
 time.sleep(1)
 
@@ -28,7 +30,9 @@ def process_first_screenshot(image_path):
     gray = cv2.cvtColor(result, cv2.COLOR_BGR2GRAY)
     _, binary = cv2.threshold(gray, 240, 255, cv2.THRESH_BINARY)
     text = pytesseract.image_to_string(binary, lang='eng')
-    return text
+    # Оставляем только буквы и знак тире
+    cleaned_text = re.sub(r'[^a-zA-Z-]', '', text)
+    return cleaned_text
 
 screenshot_path = 'screenshot.png'
 
@@ -81,14 +85,31 @@ def crop_image(input_path, output_path, width, height, x_offset, y_offset):
 
 # Параметры для обрезки скриншотов
 screenshots = [
-    {"input_path": "screenshot.png", "output_path": "cropped_first.png", "width": 670, "height": 80, "x_offset": 10, "y_offset":780},
-    {"input_path": "screenshot.png", "output_path": "cropped_first_russian.png", "width": 690, "height": 120, "x_offset": 10, "y_offset": 890},
-    {"input_path": "screenshot.png", "output_path": "cropped_second_russian.png", "width": 690, "height": 120, "x_offset": 10, "y_offset": 1000},
-    {"input_path": "screenshot.png", "output_path": "cropped_third_russian.png", "width": 690, "height": 120, "x_offset": 10, "y_offset": 1150},
-    {"input_path": "screenshot.png", "output_path": "cropped_fourth_russian.png", "width": 690, "height": 120, "x_offset": 10, "y_offset": 1270}
+    {"input_path": "screenshot.png", "output_path": "cropped_first.png", "width": 660, "height": 80, "x_offset": 10, "y_offset":780},
+    {"input_path": "screenshot.png", "output_path": "cropped_first_russian.png", "width": 600, "height": 60, "x_offset": 30, "y_offset": 920},
+    {"input_path": "screenshot.png", "output_path": "cropped_second_russian.png", "width": 660, "height": 100, "x_offset": 10, "y_offset": 1000},
+    {"input_path": "screenshot.png", "output_path": "cropped_third_russian.png", "width": 660, "height": 100, "x_offset": 10, "y_offset": 1150},
+    {"input_path": "screenshot.png", "output_path": "cropped_fourth_russian.png", "width": 660, "height": 100, "x_offset": 10, "y_offset": 1270}
 ]
 
-take_screenshot("screenshot.png")
+#take_screenshot("screenshot.png")
+
+# Словарь английских слов и их переводов на русский
+dictionary = {
+    "Tablecloth": "Скатерть",
+    "Hat": "Шляпа",
+    "Melon": "Дыня",
+    "(>) Checkout": "Выезд",
+    "«@» Grapes": "Виноград",
+    "«Fridge": "Холодильник",
+    "«@) Table": "Стол",
+    "Fried": "Жареный",
+    "Restaurant": "Ресторан",
+    "Watermelon": "Арбуз",
+    "Rooftop": "Крыша",
+    "Carpet": "Ковер",
+    "Platform": "Платформа",
+}
 
 # Список для хранения распознанных текстов на русском
 russian_texts = []
@@ -117,58 +138,40 @@ for screenshot in screenshots[1:]:
 print("\nМассив текстов на русском:")
 print(russian_texts)
 
-# Словарь английских слов и их переводов на русский
-dictionary = {
-    "SCleaner": "Уборщик",
-    "Hat": "Шляпа",
-    "Melon": "Дыня",
-    "(>) Checkout": "Выезд",
-    "«@» Grapes": "Виноград",
-    "«Fridge": "Холодильник",
-    "«@) Table": "Стол",
-}
-
-# Проверяем, есть ли перевод английского текста в словаре
-if text_eng not in dictionary:
-    # Если перевода нет, сохраняем скриншот и текстовый файл
-    save_failed_screenshot(text_eng, screenshots[0]["input_path"], text_eng)
-
+# Функция для поиска индекса перевода в массиве russian_texts
 def find_translation(word, russian_words):
     if word in dictionary:
         translation = dictionary[word]
-        if translation in russian_words:
-            index = russian_words.index(translation)
-            return index
+        for index, russian_word in enumerate(russian_words):
+            seq = difflib.SequenceMatcher(None, translation.lower(), russian_word.lower())
+            ratio = seq.ratio()
+            if ratio > 0.8:  # Пороговое значение сходства строк
+                return index
     return None
 
+# Проверяем перевод слова из словаря и нажимаем соответствующие координаты
 translation_index = find_translation(text_eng, russian_texts)
 
-if translation_index == 0:
-    # Если translation_index равен 0, нажимаем на координаты 100 100
-    run_adb_command('adb -s emulator-5554 shell input tap 150 425 ')
-    print(1)
-    run_adb_command('adb -s emulator-5554 shell input tap 150 650 ') #дальше
-elif translation_index == 1:
-    # Если translation_index равен 1, нажимаем на координаты 230 250
-    run_adb_command('adb -s emulator-5554 shell input tap 150 500 ')
-    print(2)
-    run_adb_command('adb -s emulator-5554 shell input tap 150 650 ') #дальше
-elif translation_index == 2:
-    # Если translation_index равен 2, нажимаем на координаты 421 242
-    run_adb_command('adb -s emulator-5554 shell input tap 150 570 ')
-    print(3)
-    run_adb_command('adb -s emulator-5554 shell input tap 150 650 ') #дальше
-elif translation_index == 3:
-    # Если translation_index равен 3, нажимаем на координаты 412 241
-    run_adb_command('adb -s emulator-5554 shell input tap 150 630 ')
-    print(4)
-    run_adb_command('adb -s emulator-5554 shell input tap 150 650 ') #дальше
+if translation_index is not None:
+    if translation_index == 0:
+        run_adb_command('adb -s emulator-5554 shell input tap 150 425 ')
+        print(1)
+        run_adb_command('adb -s emulator-5554 shell input tap 150 650 ') #дальше
+    elif translation_index == 1:
+        run_adb_command('adb -s emulator-5554 shell input tap 150 500 ')
+        print(2)
+        run_adb_command('adb -s emulator-5554 shell input tap 150 650 ') #дальше
+    elif translation_index == 2:
+        run_adb_command('adb -s emulator-5554 shell input tap 150 570 ')
+        print(3)
+        run_adb_command('adb -s emulator-5554 shell input tap 150 650 ') #дальше
+    elif translation_index == 3:
+        run_adb_command('adb -s emulator-5554 shell input tap 150 630 ')
+        print(4)
+        run_adb_command('adb -s emulator-5554 shell input tap 150 650 ') #дальше
 else:
-    run_adb_command('adb -s emulator-5554 shell input tap 150 630 ')
-    print(5)
-    time.sleep(0.2)
-    run_adb_command('adb -s emulator-5554 shell input tap 150 650 ') #дальше
-
+    # Если перевод не найден, выполните необходимые действия
+    print("Перевод не найден")
 
 end_time = time.time()
 

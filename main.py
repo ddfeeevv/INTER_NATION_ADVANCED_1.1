@@ -56,7 +56,7 @@ def create_folder_for_text(text):
     create_folder_if_not_exists(folder_path)
     return folder_path
 
-# Функция для сохранения скриншота и текстового файла в папку
+
 def save_failed_screenshot(text, screenshot_path, text_eng):
     folder_path = create_folder_for_text(text_eng)
     # Сохраняем скриншот рабочего стола
@@ -85,30 +85,31 @@ def crop_image(input_path, output_path, width, height, x_offset, y_offset):
 
 # Параметры для обрезки скриншотов
 screenshots = [
-    {"input_path": "screenshot.png", "output_path": "cropped_first.png", "width": 660, "height": 80, "x_offset": 10, "y_offset":780},
-    {"input_path": "screenshot.png", "output_path": "cropped_first_russian.png", "width": 600, "height": 60, "x_offset": 30, "y_offset": 920},
-    {"input_path": "screenshot.png", "output_path": "cropped_second_russian.png", "width": 660, "height": 100, "x_offset": 10, "y_offset": 1000},
-    {"input_path": "screenshot.png", "output_path": "cropped_third_russian.png", "width": 660, "height": 100, "x_offset": 10, "y_offset": 1150},
-    {"input_path": "screenshot.png", "output_path": "cropped_fourth_russian.png", "width": 660, "height": 100, "x_offset": 10, "y_offset": 1270}
+    {"input_path": "screenshot.png", "output_path": "cropped_first.png", "width": 540, "height": 120, "x_offset": 10, "y_offset":750},
+    {"input_path": "screenshot.png", "output_path": "cropped_first_russian.png", "width": 490, "height": 90, "x_offset": 30, "y_offset": 890},
+    {"input_path": "screenshot.png", "output_path": "cropped_second_russian.png", "width": 490, "height": 90, "x_offset": 30, "y_offset": 998},
+    {"input_path": "screenshot.png", "output_path": "cropped_third_russian.png", "width": 490, "height": 90, "x_offset": 30, "y_offset": 1106},
+    {"input_path": "screenshot.png", "output_path": "cropped_fourth_russian.png", "width": 490, "height": 90, "x_offset": 30, "y_offset": 1214}
 ]
 
-#take_screenshot("screenshot.png")
+take_screenshot("screenshot.png")
 
 # Словарь английских слов и их переводов на русский
 dictionary = {
     "Tablecloth": "Скатерть",
     "Hat": "Шляпа",
     "Melon": "Дыня",
-    "(>) Checkout": "Выезд",
-    "«@» Grapes": "Виноград",
+    "Nurse": "Медсестра",
+    "CinnamonRoll": "Булочка с корицей",
     "«Fridge": "Холодильник",
-    "«@) Table": "Стол",
+    "Sofa": "Диван",
     "Fried": "Жареный",
     "Restaurant": "Ресторан",
     "Watermelon": "Арбуз",
     "Rooftop": "Крыша",
     "Carpet": "Ковер",
     "Platform": "Платформа",
+    "Goodmoming": "Доброе утро",
 }
 
 # Список для хранения распознанных текстов на русском
@@ -122,10 +123,6 @@ img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 # Обрабатываем первый скриншот на английском языке
 text_eng = process_first_screenshot(screenshots[0]["output_path"])
 
-# Добавляем текст с первого скриншота (на английском) в переменную и выводим его
-print("Текст со скриншота на английском:")
-print(text_eng)
-
 # Обрабатываем остальные скриншоты на русском языке
 for screenshot in screenshots[1:]:
     crop_image(screenshot["input_path"], screenshot["output_path"], screenshot["width"], screenshot["height"], screenshot["x_offset"], screenshot["y_offset"])
@@ -133,10 +130,6 @@ for screenshot in screenshots[1:]:
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     text_rus = pytesseract.image_to_string(img, lang='rus').strip()
     russian_texts.append(text_rus)
-
-# Выводим массив распознанных текстов на русском языке
-print("\nМассив текстов на русском:")
-print(russian_texts)
 
 # Функция для поиска индекса перевода в массиве russian_texts
 def find_translation(word, russian_words):
@@ -154,24 +147,27 @@ translation_index = find_translation(text_eng, russian_texts)
 
 if translation_index is not None:
     if translation_index == 0:
-        run_adb_command('adb -s emulator-5554 shell input tap 150 425 ')
-        print(1)
-        run_adb_command('adb -s emulator-5554 shell input tap 150 650 ') #дальше
+        run_adb_command('adb -s emulator-5554 shell input tap 540 1600')
+        time.sleep(0.1)
+        run_adb_command('adb -s emulator-5554 shell input tap 540 2500')
     elif translation_index == 1:
-        run_adb_command('adb -s emulator-5554 shell input tap 150 500 ')
-        print(2)
-        run_adb_command('adb -s emulator-5554 shell input tap 150 650 ') #дальше
+        run_adb_command('adb -s emulator-5554 shell input tap 540 1800')
+        time.sleep(0.1)
+        run_adb_command('adb -s emulator-5554 shell input tap 540 2500')
     elif translation_index == 2:
-        run_adb_command('adb -s emulator-5554 shell input tap 150 570 ')
-        print(3)
-        run_adb_command('adb -s emulator-5554 shell input tap 150 650 ') #дальше
+        run_adb_command('adb -s emulator-5554 shell input tap 540 2000')
+        time.sleep(0.1)
+        run_adb_command('adb -s emulator-5554 shell input tap 540 2500')
     elif translation_index == 3:
-        run_adb_command('adb -s emulator-5554 shell input tap 150 630 ')
-        print(4)
-        run_adb_command('adb -s emulator-5554 shell input tap 150 650 ') #дальше
+        run_adb_command('adb -s emulator-5554 shell input tap 540 2200')
+        time.sleep(0.1)
+        run_adb_command('adb -s emulator-5554 shell input tap 540 2500')
 else:
-    # Если перевод не найден, выполните необходимые действия
     print("Перевод не найден")
+    run_adb_command('adb -s emulator-5554 shell input tap 540 1600')
+    time.sleep(0.1)
+    run_adb_command('adb -s emulator-5554 shell input tap 540 2500')
+    save_failed_screenshot(text_eng, screenshot_path, text_eng)
 
 end_time = time.time()
 
